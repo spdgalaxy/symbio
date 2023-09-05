@@ -1,0 +1,51 @@
+# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
+# More GitHub Actions for Azure: https://github.com/Azure/actions
+
+name: Build and deploy container app to Azure Web App - symbio
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: 'ubuntu-latest'
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+
+    - name: Log in to registry
+      uses: docker/login-action@v2
+      with:
+        registry: https://symbio.azurecr.io/
+        username: ${{ secrets.AzureAppService_ContainerUsername_8c9d10c46e8c46c69101bb81482ac621 }}
+        password: ${{ secrets.AzureAppService_ContainerPassword_72c82260bae34186ac40dfdc488a3b20 }}
+
+    - name: Build and push container image to registry
+      uses: docker/build-push-action@v3
+      with:
+        push: true
+        tags: symbio.azurecr.io/${{ secrets.AzureAppService_ContainerUsername_8c9d10c46e8c46c69101bb81482ac621 }}/symbio.sample:${{ github.sha }}
+        file: ./Dockerfile
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    environment:
+      name: 'production'
+      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
+
+    steps:
+    - name: Deploy to Azure Web App
+      id: deploy-to-webapp
+      uses: azure/webapps-deploy@v2
+      with:
+        app-name: 'symbio'
+        slot-name: 'production'
+        publish-profile: ${{ secrets.AzureAppService_PublishProfile_efc729fd07fb4b9dae13e455435ec65c }}
+        images: 'symbio.azurecr.io/${{ secrets.AzureAppService_ContainerUsername_8c9d10c46e8c46c69101bb81482ac621 }}/symbio.sample:${{ github.sha }}'
