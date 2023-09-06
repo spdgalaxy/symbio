@@ -7,7 +7,7 @@ function App() {
       <header className="App-header">
         <img src={logo} className="App-logo" alt="logo" />
         <p>
-          Welcome to My Portal
+          Welcome to Symbiosis Portal
         </p>
         <a
           className="App-link"
